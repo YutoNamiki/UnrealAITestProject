@@ -3,6 +3,16 @@
 	"EngineAssociation": "4.8",
 	"Category": "",
 	"Description": "",
+	"Modules": [
+		{
+			"Name": "AIProject",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	],
 	"Plugins": [
 		{
 			"Name": "Substance",
