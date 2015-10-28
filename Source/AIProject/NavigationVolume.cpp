@@ -34,6 +34,7 @@ void ANavigationVolume::Tick( float DeltaTime )
 void ANavigationVolume::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	WaypointList.Empty();
+	DestroyChildrenComponents(BoxVolume);
 	DivideVolume(BoxVolume, DivideX, DivideY, DivideZ, WaypointList);
 
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -47,7 +48,6 @@ void ANavigationVolume::DivideVolume(UBoxComponent* volume, int32 divX, int32 di
 	const auto divideScale = FVector(static_cast<float>(divX), static_cast<float>(divY), static_cast<float>(divZ));
 	const auto deltaVector = (maxPosition - minPosition) / divideScale;
 	const auto initPosition = minPosition + deltaVector * 0.5f;
-	auto position = initPosition;
 
 	for (auto x = initPosition.X; x < maxPosition.X; x += deltaVector.X)
 	{
@@ -55,22 +55,24 @@ void ANavigationVolume::DivideVolume(UBoxComponent* volume, int32 divX, int32 di
 		{
 			for (auto z = initPosition.Z; z < maxPosition.Z; z += deltaVector.Z)
 			{
-				waypoints.Add(CreateWaypoint(position, deltaVector * 0.5f, volume));
+				waypoints.Add(CreateWaypoint(FVector(x, y, z), deltaVector * 0.5f, volume, waypoints.Num()));
 			}
 		}
 	}
 }
 
-UWaypointComponent* ANavigationVolume::CreateWaypoint(FVector location, FVector extent, USceneComponent* inParent)
+UWaypointComponent* ANavigationVolume::CreateWaypoint(FVector location, FVector extent, USceneComponent* inParent, int32 id)
 {
-	auto* waypoint = NewObject<UWaypointComponent>(this, FName("Waypoint"));
+	auto waypointName = "Waypoint" + FString::FromInt(id);
+	auto* waypoint = ConstructObject<UWaypointComponent>(UWaypointComponent::StaticClass(), this, FName(*waypointName));
 	waypoint->SetRelativeLocation(location);
-	waypoint->ComponentTags.Add(TEXT("Waypoint"));
+	waypoint->ComponentTags.Add(FName("Waypoint"));
 	if (inParent != nullptr)
 	{
 		waypoint->AttachTo(inParent);
 	}
-	auto* waypointCollision = NewObject<UBoxComponent>(this, FName("WaypointCollision"));
+	auto waypointCollisionName = "WaypointCollision" + FString::FromInt(id);
+	auto* waypointCollision = ConstructObject<UBoxComponent>(UBoxComponent::StaticClass(), this, FName(*waypointCollisionName));
 	waypointCollision->ComponentTags.Add(FName("Waypoint"));
 	waypointCollision->SetBoxExtent(extent);
 	if (inParent != nullptr)
@@ -79,4 +81,21 @@ UWaypointComponent* ANavigationVolume::CreateWaypoint(FVector location, FVector 
 	}
 	
 	return waypoint;
+}
+
+void ANavigationVolume::DestroyChildrenComponents(USceneComponent* component)
+{
+	while (component->GetNumChildrenComponents() > 0)
+	{
+		auto childComponent = component->GetChildComponent(0);
+		childComponent->DestroyComponent(true);
+	}
+}
+
+void ANavigationVolume::CreateOctree(UWaypointComponent* waypoint, int32 recursion, int32 recursionIndex, TArray<UWaypointComponent*>& waypoints)
+{
+	TArray<FVector> localPositions;
+	FVector localExtent;
+
+
 }

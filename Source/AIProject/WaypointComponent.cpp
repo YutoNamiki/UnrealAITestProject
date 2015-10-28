@@ -36,7 +36,7 @@ void UWaypointComponent::TickComponent( float DeltaTime, ELevelTick TickType, FA
 
 UBoxComponent* UWaypointComponent::GetChildBoxCollision()
 {
-	TArray<USceneComponent*, FDefaultAllocator> children;
+	TArray<USceneComponent*> children;
 	GetChildrenComponents(true, children);
 	for (auto component : children)
 	{
@@ -56,7 +56,7 @@ UBoxComponent* UWaypointComponent::GetChildBoxCollision()
 
 bool UWaypointComponent::HasChildBoxCollision()
 {
-	TArray<USceneComponent*, FDefaultAllocator> children;
+	TArray<USceneComponent*> children;
 	GetChildrenComponents(true, children);
 	for (auto component : children)
 	{
