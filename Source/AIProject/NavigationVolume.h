@@ -53,14 +53,14 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 #if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void OnConstruction(const FTransform& Transform) override;
 #endif
 
 private:
 	int32 recursionIndex;
 
-	void DivideVolume(UBoxComponent* volume, int32 divX, int32 divY, int32 divZ, TArray<UWaypointComponent*>& waypoints);
+	void DivideVolume(UBoxComponent* volume, int32 divX, int32 divY, int32 divZ);
 	UWaypointComponent* CreateWaypoint(FVector location, FVector extent, USceneComponent* inParent = nullptr, int32 id = -1);
 	void DestroyChildrenComponents(USceneComponent* component);
-	void CreateOctree(UWaypointComponent* waypoint, int32 recursion, int32 recursionIndex, TArray<UWaypointComponent*>& waypoints);
+	void CreateOctree(UWaypointComponent* waypoint, int32 recursion, int32 recursionIndex);
 };

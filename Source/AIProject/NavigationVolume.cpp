@@ -31,23 +31,29 @@ void ANavigationVolume::Tick( float DeltaTime )
 }
 
 #if WITH_EDITOR
-void ANavigationVolume::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+void  ANavigationVolume::OnConstruction(const FTransform& Transform)
 {
+	Super::OnConstruction(Transform);
+
 	WaypointList.Empty();
 	DestroyChildrenComponents(BoxVolume);
-	DivideVolume(BoxVolume, DivideX, DivideY, DivideZ, WaypointList);
-
-	Super::PostEditChangeProperty(PropertyChangedEvent);
+	DivideVolume(BoxVolume, DivideX, DivideY, DivideZ);
+	auto waypoints = GetComponentsByClass(UWaypointComponent::StaticClass());
+	for (auto waypoint : waypoints)
+	{
+		CreateOctree(Cast<UWaypointComponent>(waypoint), Recursion, recursionIndex);
+	}
 }
 #endif
 
-void ANavigationVolume::DivideVolume(UBoxComponent* volume, int32 divX, int32 divY, int32 divZ, TArray<UWaypointComponent*>& waypoints)
+void ANavigationVolume::DivideVolume(UBoxComponent* volume, int32 divX, int32 divY, int32 divZ)
 {
 	const auto maxPosition = volume->GetUnscaledBoxExtent() * 1.0f;
 	const auto minPosition = volume->GetUnscaledBoxExtent() * -1.0f;
 	const auto divideScale = FVector(static_cast<float>(divX), static_cast<float>(divY), static_cast<float>(divZ));
 	const auto deltaVector = (maxPosition - minPosition) / divideScale;
 	const auto initPosition = minPosition + deltaVector * 0.5f;
+	auto num = 0;
 
 	for (auto x = initPosition.X; x < maxPosition.X; x += deltaVector.X)
 	{
@@ -55,30 +61,32 @@ void ANavigationVolume::DivideVolume(UBoxComponent* volume, int32 divX, int32 di
 		{
 			for (auto z = initPosition.Z; z < maxPosition.Z; z += deltaVector.Z)
 			{
-				waypoints.Add(CreateWaypoint(FVector(x, y, z), deltaVector * 0.5f, volume, waypoints.Num()));
+				CreateWaypoint(FVector(x, y, z), deltaVector * 0.5f, volume, num++);
 			}
 		}
 	}
 }
 
-UWaypointComponent* ANavigationVolume::CreateWaypoint(FVector location, FVector extent, USceneComponent* inParent, int32 id)
+UWaypointComponent* ANavigationVolume::CreateWaypoint(FVector location, FVector extent, USceneComponent* inParent, int32 number)
 {
-	auto waypointName = "Waypoint" + FString::FromInt(id);
-	auto* waypoint = ConstructObject<UWaypointComponent>(UWaypointComponent::StaticClass(), this, FName(*waypointName));
+	auto waypointName = "Waypoint" + FString::FromInt(number);
+	auto* waypoint = NewObject<UWaypointComponent>(this, FName(*waypointName));
 	waypoint->SetRelativeLocation(location);
 	waypoint->ComponentTags.Add(FName("Waypoint"));
 	if (inParent != nullptr)
 	{
 		waypoint->AttachTo(inParent);
 	}
-	auto waypointCollisionName = "WaypointCollision" + FString::FromInt(id);
-	auto* waypointCollision = ConstructObject<UBoxComponent>(UBoxComponent::StaticClass(), this, FName(*waypointCollisionName));
+	waypoint->RegisterComponent();
+	auto waypointCollisionName = "WaypointCollision" + FString::FromInt(number);
+	auto* waypointCollision = NewObject<UBoxComponent>(this, FName(*waypointCollisionName));
 	waypointCollision->ComponentTags.Add(FName("Waypoint"));
 	waypointCollision->SetBoxExtent(extent);
 	if (inParent != nullptr)
 	{
 		waypointCollision->AttachTo(waypoint);
 	}
+	waypointCollision->RegisterComponent();
 	
 	return waypoint;
 }
@@ -88,14 +96,43 @@ void ANavigationVolume::DestroyChildrenComponents(USceneComponent* component)
 	while (component->GetNumChildrenComponents() > 0)
 	{
 		auto childComponent = component->GetChildComponent(0);
+		childComponent->UnregisterComponent();
 		childComponent->DestroyComponent(true);
 	}
 }
 
-void ANavigationVolume::CreateOctree(UWaypointComponent* waypoint, int32 recursion, int32 recursionIndex, TArray<UWaypointComponent*>& waypoints)
+void ANavigationVolume::CreateOctree(UWaypointComponent* waypoint, int32 recursion, int32 recursionIndex)
 {
-	TArray<FVector> localPositions;
-	FVector localExtent;
+	if (!waypoint)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Waypoint is nullptr."));
+		return;
+	}
+	if (!waypoint->HasChildBoxCollision())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Waypoint Has Not Child Box Collision."));
+		return;
+	}
 
+	auto boxCollision = waypoint->GetChildBoxCollision();
+	auto localExtent = boxCollision->GetScaledBoxExtent() / 2.0f;
+	auto localOffset = boxCollision->GetScaledBoxExtent() / 2.0f;
+	auto waypointName = waypoint->GetName();
 
+	TArray<AActor*> overlappingActors;
+	boxCollision->GetOverlappingActors(overlappingActors);
+	
+	if (overlappingActors.Num() > 0)
+	{
+		boxCollision->UnregisterComponent();
+		boxCollision->DestroyComponent();
+		waypoint->UnregisterComponent();
+		waypoint->DestroyComponent();
+	}
+	if (recursionIndex < recursion)
+	{
+		recursionIndex++;
+	}
+
+	
 }
