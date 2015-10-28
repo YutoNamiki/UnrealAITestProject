@@ -61,10 +61,6 @@
 !*.js
 !*.command
 
-# Asset files
-!*.uasset
-!*.umap
-
 # Other configuration and markup files
 !*.ini
 !*.json
@@ -109,6 +105,10 @@
 
 # Ignore Unix backup files
 *~
+
+# Asset files
+!*.uasset
+!*.umap
 
 # Exceptions
 /*.sln
