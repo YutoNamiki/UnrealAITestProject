@@ -82,6 +82,10 @@ UWaypointComponent* ANavigationVolume::CreateWaypoint(FVector location, FVector 
 	auto* waypointCollision = NewObject<UBoxComponent>(this, FName(*waypointCollisionName));
 	waypointCollision->ComponentTags.Add(FName("Waypoint"));
 	waypointCollision->SetBoxExtent(extent);
+	waypointCollision->SetCollisionProfileName(FName("OverlapAll"));
+	waypointCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	waypointCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	waypointCollision->bGenerateOverlapEvents = true;
 	if (inParent != nullptr)
 	{
 		waypointCollision->AttachTo(waypoint);
@@ -119,16 +123,23 @@ void ANavigationVolume::CreateOctree(UWaypointComponent* waypoint, int32 recursi
 	auto localOffset = boxCollision->GetScaledBoxExtent() / 2.0f;
 	auto waypointName = waypoint->GetName();
 
-	TArray<AActor*> overlappingActors;
-	boxCollision->GetOverlappingActors(overlappingActors);
-	
-	if (overlappingActors.Num() > 0)
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *(boxCollision->GetComponentLocation().ToString()));
+
+	TArray<FOverlapResult> overlapResults;
+	if (GetWorld()->ComponentOverlapMultiByChannel(
+		overlapResults,
+		boxCollision,
+		boxCollision->GetComponentLocation(),
+		boxCollision->GetComponentRotation(),
+		ECollisionChannel::ECC_WorldStatic)
+		)
 	{
 		boxCollision->UnregisterComponent();
 		boxCollision->DestroyComponent();
 		waypoint->UnregisterComponent();
 		waypoint->DestroyComponent();
 	}
+
 	if (recursionIndex < recursion)
 	{
 		recursionIndex++;
