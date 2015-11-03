@@ -25,6 +25,17 @@ enum class EPathFindingResultState : uint8
 	Success		UMETA(DisplayName = "Success")
 };
 
+USTRUCT(BlueprintType)
+struct FWaypointPath
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NavigationPath")
+	UWaypointComponent* Waypoint1;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NavigationPath")
+	UWaypointComponent* Waypoint2;
+};
+
 UCLASS()
 class AIPROJECT_API ANavigationVolume : public AActor
 {
@@ -54,13 +65,16 @@ public:
 	virtual void Tick( float DeltaSeconds ) override;
 #if WITH_EDITOR
 	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void EditorApplyTranslation(const FVector& DeltaTranslation, bool bAltDown, bool bShiftDown, bool bCtrlDown) override;
 #endif
 
 private:
 	int32 recursionIndex;
 
+	void Initialize();
 	void DivideVolume(UBoxComponent* volume, int32 divX, int32 divY, int32 divZ);
-	UWaypointComponent* CreateWaypoint(FVector location, FVector extent, USceneComponent* inParent = nullptr, int32 id = -1);
+	UWaypointComponent* CreateWaypoint(FVector location, FVector extent, FString name, USceneComponent* inParent = nullptr);
 	void DestroyChildrenComponents(USceneComponent* component);
-	void CreateOctree(UWaypointComponent* waypoint, int32 recursion, int32 recursionIndex);
+	void CreateOctree(UWaypointComponent* waypoint, int32 recursion, int32 recursionIndex, USceneComponent* inParent = nullptr);
+	void CreatePaths(const TArray<UWaypointComponent*>& waypointList);
 };
