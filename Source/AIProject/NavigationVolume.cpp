@@ -185,9 +185,10 @@ void ANavigationVolume::CreateOctree(UWaypointComponent* waypoint, int32 recursi
 
 void ANavigationVolume::CreatePaths(const TArray<UWaypointComponent*>& waypointList)
 {
-	TArray<FOverlapResult> overlapResults;
+	TArray<UPrimitiveComponent*> overlapResults;
 	for (auto waypoint : waypointList)
 	{
+		overlapResults.Empty();
 		auto collision = waypoint->GetChildBoxCollision();
 		
 	}
