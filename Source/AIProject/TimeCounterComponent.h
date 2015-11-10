@@ -33,6 +33,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TimeCounter")
 	void Display(int32 index);
 
+	UFUNCTION(BlueprintCallable, Category = "TimeCounter")
+	int32 GetElapsedTimeFromStart(int32 index);
+
 private:
 
 	TArray<FDateTime> startTimes;

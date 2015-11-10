@@ -3,27 +3,10 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "PathFindingComponent.h"
 #include "NavigationVolume.generated.h"
 
 class UWaypointComponent;
-
-UENUM(BlueprintType)
-enum class EPathFindingState : uint8
-{
-	LineTracing				UMETA(DisplayName = "LineTrace"),
-	GettingStartNode		UMETA(DisplayName = "GettingStartNode"),
-	GettingEndNode			UMETA(DisplayName = "GettingEndNode"),
-	PathFinding				UMETA(DisplayName = "PathFinding"),
-	ConvertingPathToVector	UMETA(DisplayName = "ConvertingPathToVector")
-};
-
-UENUM(BlueprintType)
-enum class EPathFindingResultState : uint8
-{
-	Failed		UMETA(DisplayName = "Failed"),
-	Thinking	UMETA(DisplayName = "Thinking"),
-	Success		UMETA(DisplayName = "Success")
-};
 
 USTRUCT(BlueprintType)
 struct FWaypointPath
@@ -31,9 +14,11 @@ struct FWaypointPath
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NavigationPath")
-	UWaypointComponent* Waypoint1;
+	int32 WaypointID1;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NavigationPath")
-	UWaypointComponent* Waypoint2;
+	int32 WaypointID2;
+
+	void Initialize(int waypoint1, int waypoint2);
 };
 
 UCLASS()
@@ -44,10 +29,16 @@ class AIPROJECT_API ANavigationVolume : public AActor
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "NavigationVolume")
 	UBoxComponent* BoxVolume;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NavigationVolume")
+	UPathFindingComponent* PathFindingComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Waypoint")
 	TArray<UWaypointComponent*> WaypointList;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Waypoint")
+	TArray<FWaypointPath> WaypointPathList;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Waypoint")
 	int32 WaypointCount = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Waypoint")
+	int32 WaypointPathCount = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpaceDivision")
 	int32 DivideX = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpaceDivision")
@@ -56,6 +47,10 @@ public:
 	int32 DivideZ = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpaceDivision")
 	int32 Recursion = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
+	bool IsVisiblePaths = true;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
+	bool IsUseWaypointCollisions = true;
 
 	// Sets default values for this actor's properties
 	ANavigationVolume();
@@ -68,6 +63,9 @@ public:
 	virtual void EditorApplyTranslation(const FVector& DeltaTranslation, bool bAltDown, bool bShiftDown, bool bCtrlDown) override;
 #endif
 
+	UFUNCTION(BlueprintCallable, Category = "PathFinding")
+	EPathFindingResultState FindPath(APawn* findPawn, TArray<FVector>& resultRoute, FVector start, FVector end);
+
 private:
 	int32 recursionIndex;
 
@@ -76,5 +74,6 @@ private:
 	UWaypointComponent* CreateWaypoint(FVector location, FVector extent, FString name, USceneComponent* inParent = nullptr);
 	void DestroyChildrenComponents(USceneComponent* component);
 	void CreateOctree(UWaypointComponent* waypoint, int32 recursion, int32 recursionIndex, USceneComponent* inParent = nullptr);
-	void CreatePaths(const TArray<UWaypointComponent*>& waypointList);
+	void CreatePaths(const TArray<UWaypointComponent*>& waypointList, TArray<FWaypointPath>& waypointPathList);
+	void DebugSettings(TArray<UWaypointComponent*>& waypointList, TArray<FWaypointPath>& waypointPathList, bool isUseWaypointCollisions, bool isVisiblePaths);
 };

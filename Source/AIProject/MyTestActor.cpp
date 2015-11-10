@@ -127,12 +127,7 @@ void AMyTestActor::EditorApplyTranslation(const FVector& DeltaTranslation, bool 
 	UE_LOG(LogTemp, Warning, TEXT("AActor:EditorApplyTranslation"));
 	Super::EditorApplyTranslation(DeltaTranslation, bAltDown, bShiftDown, bCtrlDown);
 
-	TArray<FOverlapResult> overlapResults;
-	if (GetWorld()->OverlapMultiByChannel(overlapResults, BoxCollision->GetComponentLocation(), BoxCollision->GetComponentQuat(), ECollisionChannel::ECC_WorldStatic,
-		FCollisionShape::MakeBox(BoxCollision->GetScaledBoxExtent())))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Overlapping!"));
-	}
+	TestFunction();
 }
 
 void AMyTestActor::EditorKeyPressed(FKey Key, EInputEvent Event)
@@ -152,12 +147,7 @@ void AMyTestActor::OnConstruction(const FTransform& Transform)
 	UE_LOG(LogTemp, Warning, TEXT("AActor:OnConstruction"));
 	Super::OnConstruction(Transform);
 
-	TArray<FOverlapResult> overlapResults;
-	if (GetWorld()->OverlapMultiByChannel(overlapResults, BoxCollision->GetComponentLocation(), BoxCollision->GetComponentQuat(), ECollisionChannel::ECC_WorldStatic,
-		FCollisionShape::MakeBox(BoxCollision->GetScaledBoxExtent())))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Overlapping!"));
-	}
+	TestFunction();
 }
 
 void AMyTestActor::OnSerializeNewActor(FOutBunch& OutBunch)
@@ -258,4 +248,23 @@ void AMyTestActor::OnUPrimitiveComponentBeginOverlap(AActor* OtherActor, UPrimit
 void AMyTestActor::OnUPrimitiveComponentEndOverlap(AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OhterBodyIndex)
 {
 	UE_LOG(LogTemp, Warning, TEXT("AActor(Component):OnComponentEndOverlap"));
+}
+
+void AMyTestActor::TestFunction()
+{
+	TArray<FOverlapResult> overlapResults;
+	//if (GetWorld()->OverlapMultiByObjectType(overlapResults, BoxCollision->GetComponentLocation(), BoxCollision->GetComponentQuat(),
+	//	FCollisionObjectQueryParams(), FCollisionShape::MakeBox(BoxCollision->GetScaledBoxExtent())))
+	if (GetWorld()->ComponentOverlapMulti(overlapResults, BoxCollision, BoxCollision->GetComponentLocation(), BoxCollision->GetComponentRotation()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Overlapping!"));
+		UE_LOG(LogTemp, Warning, TEXT("Count: %d objects"), overlapResults.Num());
+		for (auto overlapResult : overlapResults)
+		{
+			auto actor = overlapResult.GetActor();
+			auto component = overlapResult.GetComponent();
+			auto messageText = FString("Actor: ") + actor->GetName() + FString(" Component: ") + component->GetName();
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *messageText);
+		}
+	}
 }

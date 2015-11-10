@@ -48,3 +48,9 @@ void UTimeCounterComponent::Display(int32 index)
 	auto measurementTimeString = FString("[") + FString::FromInt(index) + FString("] Œv‘ªŽžŠÔF ") + FString::FromInt(deltaTime.GetMilliseconds()) + FString(" ms");
 	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, measurementTimeString);
 }
+
+int32 UTimeCounterComponent::GetElapsedTimeFromStart(int32 index)
+{
+	auto currentTime = FDateTime::Now();
+	return (currentTime - startTimes[index]).GetMilliseconds();
+}

@@ -73,4 +73,6 @@ public:
 	void OnUPrimitiveComponentBeginOverlap(AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OhterBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
 	void OnUPrimitiveComponentEndOverlap(AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OhterBodyIndex);
+
+	void TestFunction();
 };

@@ -31,9 +31,6 @@ public:
 	float Cost;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Waypoint")
-	float Heuristic;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Waypoint")
 	TArray<UWaypointComponent*> NeighborWaypoints;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Waypoint")

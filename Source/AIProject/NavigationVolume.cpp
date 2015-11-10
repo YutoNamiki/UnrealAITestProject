@@ -3,6 +3,13 @@
 #include "AIProject.h"
 #include "NavigationVolume.h"
 #include "WaypointComponent.h"
+#include "TimeCounterComponent.h"
+
+void FWaypointPath::Initialize(int waypointId1, int waypointId2)
+{
+	WaypointID1 = waypointId1;
+	WaypointID2 = waypointId2;
+}
 
 // Sets default values
 ANavigationVolume::ANavigationVolume()
@@ -12,6 +19,7 @@ ANavigationVolume::ANavigationVolume()
 
 	BoxVolume = CreateDefaultSubobject<UBoxComponent>(FName("Volume"));
 	RootComponent = BoxVolume;
+	PathFindingComponent = CreateDefaultSubobject<UPathFindingComponent>(FName("PathFinding"));
 
 	recursionIndex = 0;
 }
@@ -47,9 +55,15 @@ void ANavigationVolume::EditorApplyTranslation(const FVector& DeltaTranslation, 
 
 #endif
 
+EPathFindingResultState ANavigationVolume::FindPath(APawn* findPawn, TArray<FVector>& resultRoute, FVector start, FVector end)
+{
+	return PathFindingComponent->FindPath(findPawn, resultRoute, start, end);
+}
+
 void ANavigationVolume::Initialize()
 {
 	WaypointList.Empty();
+	WaypointPathList.Empty();
 	DestroyChildrenComponents(BoxVolume);
 	DivideVolume(BoxVolume, DivideX, DivideY, DivideZ);
 	auto components = GetComponentsByClass(UWaypointComponent::StaticClass());
@@ -61,17 +75,21 @@ void ANavigationVolume::Initialize()
 		CreateOctree(waypoint, Recursion, recursionIndex, BoxVolume);
 	}
 	components = GetComponentsByClass(UWaypointComponent::StaticClass());
-	auto i = 0;
+	auto num = 0;
 	for (auto component : components)
 	{
 		auto waypoint = Cast<UWaypointComponent>(component);
 		if (waypoint == nullptr)
 			continue;
-		waypoint->ID = i++;
+		waypoint->ID = num++;
 		WaypointList.Add(waypoint);
 	}
+	CreatePaths(WaypointList, WaypointPathList);
+	PathFindingComponent->Waypoints.Empty();
+	PathFindingComponent->Waypoints = WaypointList;
 	WaypointCount = WaypointList.Num();
-
+	WaypointPathCount = WaypointPathList.Num();
+	DebugSettings(WaypointList, WaypointPathList, IsUseWaypointCollisions, IsVisiblePaths);
 }
 
 void ANavigationVolume::DivideVolume(UBoxComponent* volume, int32 divX, int32 divY, int32 divZ)
@@ -98,25 +116,21 @@ void ANavigationVolume::DivideVolume(UBoxComponent* volume, int32 divX, int32 di
 
 UWaypointComponent* ANavigationVolume::CreateWaypoint(FVector location, FVector extent, FString name, USceneComponent* inParent)
 {
-	auto* waypoint = NewObject<UWaypointComponent>(this, FName(*name));
+	auto waypoint = NewObject<UWaypointComponent>(this, FName(*name));
 	waypoint->SetRelativeLocation(location);
 	waypoint->ComponentTags.Add(FName("Waypoint"));
 	if (inParent != nullptr)
-	{
 		waypoint->AttachTo(inParent);
-	}
 	waypoint->RegisterComponent();
-	auto waypointCollisionName = FName(*(name.Append(TEXT("_Collision"))));
-	auto* waypointCollision = NewObject<UBoxComponent>(this, waypointCollisionName);
+	const auto waypointCollisionName = FName(*(name.Append(TEXT("_Collision"))));
+	auto waypointCollision = NewObject<UBoxComponent>(this, waypointCollisionName);
 	waypointCollision->ComponentTags.Add(FName("Waypoint"));
 	waypointCollision->SetBoxExtent(extent);
 	waypointCollision->SetCollisionProfileName(FName("OverlapAll"));
 	waypointCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	waypointCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	if (inParent != nullptr)
-	{
 		waypointCollision->AttachTo(waypoint);
-	}
 	waypointCollision->RegisterComponent();
 	
 	return waypoint;
@@ -126,9 +140,13 @@ void ANavigationVolume::DestroyChildrenComponents(USceneComponent* component)
 {
 	while (component->GetNumChildrenComponents() > 0)
 	{
-		auto childComponent = component->GetChildComponent(0);
-		childComponent->UnregisterComponent();
-		childComponent->DestroyComponent(true);
+		const auto childComponent = component->GetChildComponent(0);
+		if (childComponent == nullptr)
+			continue;
+		DestroyChildrenComponents(childComponent);
+		if (childComponent->IsRegistered())
+			childComponent->UnregisterComponent();
+		childComponent->DestroyComponent(false);
 	}
 }
 
@@ -139,30 +157,25 @@ void ANavigationVolume::CreateOctree(UWaypointComponent* waypoint, int32 recursi
 		UE_LOG(LogTemp, Warning, TEXT("Waypoint Has Not Child Box Collision."));
 		return;
 	}
-
-	auto boxCollision = waypoint->GetChildBoxCollision();
-	auto localLocation = waypoint->GetRelativeTransform().GetLocation();
-	auto collisionExtent = boxCollision->GetScaledBoxExtent();
-	auto localExtent = collisionExtent / 2.0f;
-	auto localOffset = collisionExtent / 2.0f;
-	auto waypointName = waypoint->GetName();
+	const auto boxCollision = waypoint->GetChildBoxCollision();
+	const auto localLocation = waypoint->GetRelativeTransform().GetLocation();
+	const auto collisionExtent = boxCollision->GetScaledBoxExtent();
+	const auto localExtent = collisionExtent / 2.0f;
+	const auto localOffset = collisionExtent / 2.0f;
+	const auto waypointName = waypoint->GetName();
 
 	TArray<FOverlapResult> overlapResults;
 	if (!GetWorld()->OverlapMultiByChannel(overlapResults, boxCollision->GetComponentLocation(), boxCollision->GetComponentQuat(), 
 		ECollisionChannel::ECC_WorldStatic, FCollisionShape::MakeBox(collisionExtent)))
-	{
 		return;
-	}
-
-	boxCollision->UnregisterComponent();
+	if (boxCollision->IsRegistered())
+		boxCollision->UnregisterComponent();
 	boxCollision->DestroyComponent();
-	waypoint->UnregisterComponent();
+	if (waypoint->IsRegistered())
+		waypoint->UnregisterComponent();
 	waypoint->DestroyComponent();
-
 	if (recursionIndex >= recursion)
-	{
 		return;
-	}
 	recursionIndex++;
 	
 	CreateOctree(CreateWaypoint(FVector(localLocation.X + localOffset.X, localLocation.Y + localOffset.Y, localLocation.Z + localOffset.Z), localExtent, waypointName + "_1", inParent), 
@@ -183,13 +196,58 @@ void ANavigationVolume::CreateOctree(UWaypointComponent* waypoint, int32 recursi
 		recursion, recursionIndex, inParent);
 }
 
-void ANavigationVolume::CreatePaths(const TArray<UWaypointComponent*>& waypointList)
+void ANavigationVolume::CreatePaths(const TArray<UWaypointComponent*>& waypointList, TArray<FWaypointPath>& waypointPathList)
 {
-	TArray<UPrimitiveComponent*> overlapResults;
+	TArray<FOverlapResult> overlapResults;
+	TArray<USceneComponent*> parentComponents;
+
 	for (auto waypoint : waypointList)
 	{
 		overlapResults.Empty();
 		auto collision = waypoint->GetChildBoxCollision();
-		
+		if (!GetWorld()->ComponentOverlapMulti(overlapResults, collision, collision->GetComponentLocation(), collision->GetComponentRotation()))
+			continue;
+		for (auto overlapResult : overlapResults)
+		{
+			auto waypointCollisionComponent = Cast<UBoxComponent>(overlapResult.GetComponent());
+			if (waypointCollisionComponent == nullptr)
+				continue;
+			if (!waypointCollisionComponent->ComponentHasTag(FName("Waypoint")))
+				continue;
+			parentComponents.Empty();
+			waypointCollisionComponent->GetParentComponents(parentComponents);
+			for (auto parentComponent : parentComponents)
+			{
+				auto waypointComponent = Cast<UWaypointComponent>(parentComponent);
+				if (waypointComponent == nullptr)
+					continue;
+				if (!waypointComponent->ComponentHasTag(FName("Waypoint")))
+					continue;
+				waypoint->NeighborWaypoints.Add(waypointComponent);
+				waypointPathList.Add(FWaypointPath());
+				waypointPathList.Last().Initialize(waypoint->ID, waypointComponent->ID);
+			}
+		}
 	}
+	for (auto index1 = 0; index1 < waypointPathList.Num() - 1; index1++)
+	{
+		for (auto index2 = index1 + 1; index2 < waypointPathList.Num(); index2++)
+		{
+			const auto& path1 = waypointPathList[index1];
+			const auto& path2 = waypointPathList[index2];
+			if (path1.WaypointID1 == path2.WaypointID2 && path1.WaypointID2 == path2.WaypointID1)
+				waypointPathList.RemoveAt(index2--);
+		}
+	}
+}
+
+void ANavigationVolume::DebugSettings(TArray<UWaypointComponent*>& waypointList, TArray<FWaypointPath>& waypointPathList, bool isUseWaypointCollisions, bool isVisiblePaths)
+{
+	if (!isUseWaypointCollisions)
+	{
+		for (auto waypoint : waypointList)
+			DestroyChildrenComponents(waypoint);
+	}
+	if (!isVisiblePaths)
+		waypointPathList.Empty();
 }
