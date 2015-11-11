@@ -11,6 +11,11 @@ void FWaypointPath::Initialize(int waypointId1, int waypointId2)
 	WaypointID2 = waypointId2;
 }
 
+void FWaypointPath::DrawPath()
+{
+
+}
+
 // Sets default values
 ANavigationVolume::ANavigationVolume()
 {

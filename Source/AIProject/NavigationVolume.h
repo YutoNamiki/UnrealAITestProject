@@ -19,6 +19,7 @@ struct FWaypointPath
 	int32 WaypointID2;
 
 	void Initialize(int waypoint1, int waypoint2);
+	void DrawPath();
 };
 
 UCLASS()
@@ -51,6 +52,10 @@ public:
 	bool IsVisiblePaths = true;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
 	bool IsUseWaypointCollisions = true;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
+	FColor DrawPathColor;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
+	float DrawPathDuration = 5.0f;
 
 	// Sets default values for this actor's properties
 	ANavigationVolume();
