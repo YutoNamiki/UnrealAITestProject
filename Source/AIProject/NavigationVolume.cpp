@@ -3,18 +3,8 @@
 #include "AIProject.h"
 #include "NavigationVolume.h"
 #include "WaypointComponent.h"
+#include "WaypointPathComponent.h"
 #include "TimeCounterComponent.h"
-
-void FWaypointPath::Initialize(int waypointId1, int waypointId2)
-{
-	WaypointID1 = waypointId1;
-	WaypointID2 = waypointId2;
-}
-
-void FWaypointPath::DrawPath()
-{
-
-}
 
 // Sets default values
 ANavigationVolume::ANavigationVolume()
@@ -60,9 +50,34 @@ void ANavigationVolume::EditorApplyTranslation(const FVector& DeltaTranslation, 
 
 #endif
 
-EPathFindingResultState ANavigationVolume::FindPath(APawn* findPawn, TArray<FVector>& resultRoute, FVector start, FVector end)
+EPathFindingResultState ANavigationVolume::FindPathByVectors(APawn* findPawn, TArray<FVector>& resultRoute, FVector start, FVector end)
 {
 	return PathFindingComponent->FindPath(findPawn, resultRoute, start, end);
+}
+
+EPathFindingResultState ANavigationVolume::FindPathByActors(APawn* findPawn, TArray<FVector>& resultRoute, AActor* start, AActor* end)
+{
+	return PathFindingComponent->FindPath(findPawn, resultRoute, start->GetActorLocation(), end->GetActorLocation());
+}
+
+EPathFindingResultState ANavigationVolume::FindPathBySceneComponent(APawn* findPawn, TArray<FVector>& resultRoute, USceneComponent* start, USceneComponent* end)
+{
+	return PathFindingComponent->FindPath(findPawn, resultRoute, start->GetComponentLocation(), end->GetComponentLocation());
+}
+
+void ANavigationVolume::DrawPathFromVector(FVector start, TArray<FVector> route, FColor pathColor, float duration, float pathThickness)
+{
+	PathFindingComponent->DrawPath(start, route, pathColor, duration, pathThickness);
+}
+
+void ANavigationVolume::DrawPathFromActor(AActor* start, TArray<FVector> route, FColor pathColor, float duration, float pathThickness)
+{
+	PathFindingComponent->DrawPath(start->GetActorLocation(), route, pathColor, duration, pathThickness);
+}
+
+void ANavigationVolume::DrawPathFromSceneComponent(USceneComponent* start, TArray<FVector> route, FColor pathColor, float duration, float pathThickness)
+{
+	PathFindingComponent->DrawPath(start->GetComponentLocation(), route, pathColor, duration, pathThickness);
 }
 
 void ANavigationVolume::Initialize()
@@ -89,7 +104,7 @@ void ANavigationVolume::Initialize()
 		waypoint->ID = num++;
 		WaypointList.Add(waypoint);
 	}
-	CreatePaths(WaypointList, WaypointPathList);
+	CreatePaths(WaypointList, WaypointPathList, DrawPathColor, Thickness);
 	PathFindingComponent->Waypoints.Empty();
 	PathFindingComponent->Waypoints = WaypointList;
 	WaypointCount = WaypointList.Num();
@@ -201,10 +216,11 @@ void ANavigationVolume::CreateOctree(UWaypointComponent* waypoint, int32 recursi
 		recursion, recursionIndex, inParent);
 }
 
-void ANavigationVolume::CreatePaths(const TArray<UWaypointComponent*>& waypointList, TArray<FWaypointPath>& waypointPathList)
+void ANavigationVolume::CreatePaths(const TArray<UWaypointComponent*>& waypointList, TArray<UWaypointPathComponent*>& waypointPathList, FColor color, float thickness)
 {
 	TArray<FOverlapResult> overlapResults;
 	TArray<USceneComponent*> parentComponents;
+	int32 id = 0;
 
 	for (auto waypoint : waypointList)
 	{
@@ -229,8 +245,7 @@ void ANavigationVolume::CreatePaths(const TArray<UWaypointComponent*>& waypointL
 				if (!waypointComponent->ComponentHasTag(FName("Waypoint")))
 					continue;
 				waypoint->NeighborWaypoints.Add(waypointComponent);
-				waypointPathList.Add(FWaypointPath());
-				waypointPathList.Last().Initialize(waypoint->ID, waypointComponent->ID);
+				waypointPathList.Add(CreateWaypointPath(waypoint, waypointComponent, FString("WaypointPath_") + FString::FromInt(id++), color, thickness));
 			}
 		}
 	}
@@ -238,15 +253,25 @@ void ANavigationVolume::CreatePaths(const TArray<UWaypointComponent*>& waypointL
 	{
 		for (auto index2 = index1 + 1; index2 < waypointPathList.Num(); index2++)
 		{
-			const auto& path1 = waypointPathList[index1];
-			const auto& path2 = waypointPathList[index2];
-			if (path1.WaypointID1 == path2.WaypointID2 && path1.WaypointID2 == path2.WaypointID1)
+			auto path1 = waypointPathList[index1];
+			auto path2 = waypointPathList[index2];
+			if (path1->Waypoint1->ID == path2->Waypoint2->ID && path1->Waypoint2->ID == path2->Waypoint1->ID)
 				waypointPathList.RemoveAt(index2--);
 		}
 	}
 }
 
-void ANavigationVolume::DebugSettings(TArray<UWaypointComponent*>& waypointList, TArray<FWaypointPath>& waypointPathList, bool isUseWaypointCollisions, bool isVisiblePaths)
+UWaypointPathComponent* ANavigationVolume::CreateWaypointPath(UWaypointComponent* waypoint1, UWaypointComponent* waypoint2, FString pathName, FColor color, float thickness)
+{
+	auto* path = NewObject<UWaypointPathComponent>(this, FName(*pathName));
+	path->Waypoint1 = waypoint1;
+	path->Waypoint2 = waypoint2;
+	path->DrawPathColor = color;
+	path->Thickness = thickness;
+	return path;
+}
+
+void ANavigationVolume::DebugSettings(TArray<UWaypointComponent*>& waypointList, TArray<UWaypointPathComponent*>& waypointPathList, bool isUseWaypointCollisions, bool isVisiblePaths)
 {
 	if (!isUseWaypointCollisions)
 	{
@@ -254,5 +279,9 @@ void ANavigationVolume::DebugSettings(TArray<UWaypointComponent*>& waypointList,
 			DestroyChildrenComponents(waypoint);
 	}
 	if (!isVisiblePaths)
+	{
+		for (auto path : waypointPathList)
+			path->DestroyComponent();
 		waypointPathList.Empty();
+	}
 }

@@ -4,6 +4,7 @@
 #include "PathFindingComponent.h"
 #include "WaypointComponent.h"
 #include "TimeCounterComponent.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values for this component's properties
 UPathFindingComponent::UPathFindingComponent()
@@ -100,6 +101,22 @@ EPathFindingResultState UPathFindingComponent::FindPath(APawn* findPawn, TArray<
 
 	SetStatus();
 	return EPathFindingResultState::Failed;
+}
+
+void UPathFindingComponent::DrawPath(FVector start, TArray<FVector>& route, FColor color, float duration, float thickness)
+{
+	if (duration <= 0.0f)
+	{
+		DrawDebugLine(GetWorld(), start, route.Last(), color, true, -1.0f, (uint8)'\000', thickness);
+		for (auto index = 0; index < route.Num() - 2; index++)
+			DrawDebugLine(GetWorld(), route[index], route[index + 1], color, true, -1.0f, (uint8)'\000', thickness);
+	}
+	else
+	{
+		DrawDebugLine(GetWorld(), start, route.Last(), color, false, duration, (uint8)'\000', thickness);
+		for (auto index = 0; index < route.Num() - 2; index++)
+			DrawDebugLine(GetWorld(), route[index], route[index + 1], color, false, duration, (uint8)'\000', thickness);
+	}
 }
 
 void UPathFindingComponent::SetStatus(bool isFinding, APawn* findPawn, EPathFindingState nextState)

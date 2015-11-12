@@ -47,6 +47,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "PathFinding")
 	EPathFindingResultState FindPath(APawn* findPawn, TArray<FVector>& resultRoute, FVector start, FVector end);
+	UFUNCTION(BlueprintCallable, Category = "PathFinding")
+	void DrawPath(FVector start, TArray<FVector>& route, FColor color = FColor::Green, float duration = 0.0f, float thickness = 1.0f);
 
 private:
 	EPathFindingState currentState;

@@ -7,20 +7,7 @@
 #include "NavigationVolume.generated.h"
 
 class UWaypointComponent;
-
-USTRUCT(BlueprintType)
-struct FWaypointPath
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NavigationPath")
-	int32 WaypointID1;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NavigationPath")
-	int32 WaypointID2;
-
-	void Initialize(int waypoint1, int waypoint2);
-	void DrawPath();
-};
+class UWaypointPathComponent;
 
 UCLASS()
 class AIPROJECT_API ANavigationVolume : public AActor
@@ -30,12 +17,12 @@ class AIPROJECT_API ANavigationVolume : public AActor
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "NavigationVolume")
 	UBoxComponent* BoxVolume;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NavigationVolume")
+	UPROPERTY(BlueprintReadWrite, Category = "NavigationVolume")
 	UPathFindingComponent* PathFindingComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Waypoint")
 	TArray<UWaypointComponent*> WaypointList;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Waypoint")
-	TArray<FWaypointPath> WaypointPathList;
+	TArray<UWaypointPathComponent*> WaypointPathList;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Waypoint")
 	int32 WaypointCount = 0;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Waypoint")
@@ -53,9 +40,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
 	bool IsUseWaypointCollisions = true;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
-	FColor DrawPathColor;
+	FColor DrawPathColor = FColor::Green;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
-	float DrawPathDuration = 5.0f;
+	float Thickness = 1.0f;
 
 	// Sets default values for this actor's properties
 	ANavigationVolume();
@@ -69,7 +56,17 @@ public:
 #endif
 
 	UFUNCTION(BlueprintCallable, Category = "PathFinding")
-	EPathFindingResultState FindPath(APawn* findPawn, TArray<FVector>& resultRoute, FVector start, FVector end);
+	EPathFindingResultState FindPathByVectors(APawn* findPawn, TArray<FVector>& resultRoute, FVector start, FVector end);
+	UFUNCTION(BlueprintCallable, Category = "PathFinding")
+	EPathFindingResultState FindPathByActors(APawn* findPawn, TArray<FVector>& resultRoute, AActor* start, AActor* end);
+	UFUNCTION(BlueprintCallable, Category = "PathFinding")
+	EPathFindingResultState FindPathBySceneComponent(APawn* findPawn, TArray<FVector>& resultRoute, USceneComponent* start, USceneComponent* end);
+	UFUNCTION(BlueprintCallable, Category = "PathFinding")
+	void DrawPathFromVector(FVector start, TArray<FVector> route, FColor pathColor = FColor::Black, float duration = 0.0f, float pathThickness = 1.0f);
+	UFUNCTION(BlueprintCallable, Category = "PathFinding")
+	void DrawPathFromActor(AActor* start, TArray<FVector> route, FColor pathColor = FColor::Black, float duration = 0.0f, float pathThickness = 1.0f);
+	UFUNCTION(BlueprintCallable, Category = "PathFinding")
+	void DrawPathFromSceneComponent(USceneComponent* start, TArray<FVector> route, FColor pathColor = FColor::Black, float duration = 0.0f, float pathThickness = 1.0f);
 
 private:
 	int32 recursionIndex;
@@ -79,6 +76,7 @@ private:
 	UWaypointComponent* CreateWaypoint(FVector location, FVector extent, FString name, USceneComponent* inParent = nullptr);
 	void DestroyChildrenComponents(USceneComponent* component);
 	void CreateOctree(UWaypointComponent* waypoint, int32 recursion, int32 recursionIndex, USceneComponent* inParent = nullptr);
-	void CreatePaths(const TArray<UWaypointComponent*>& waypointList, TArray<FWaypointPath>& waypointPathList);
-	void DebugSettings(TArray<UWaypointComponent*>& waypointList, TArray<FWaypointPath>& waypointPathList, bool isUseWaypointCollisions, bool isVisiblePaths);
+	void CreatePaths(const TArray<UWaypointComponent*>& waypointList, TArray<UWaypointPathComponent*>& waypointPathList, FColor color, float thickness);
+	UWaypointPathComponent* CreateWaypointPath(UWaypointComponent* waypoint1, UWaypointComponent* waypoint2, FString pathName, FColor color = FColor::Green, float thickness = 1.0f);
+	void DebugSettings(TArray<UWaypointComponent*>& waypointList, TArray<UWaypointPathComponent*>& waypointPathList, bool isUseWaypointCollisions, bool isVisiblePaths);
 };
