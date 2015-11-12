@@ -60,6 +60,7 @@ EPathFindingResultState UPathFindingComponent::FindPath(APawn* findPawn, TArray<
 		endLocation = end;
 		findingIndex = 0;
 	}
+
 	switch (currentState)
 	{
 	case EPathFindingState::LineTracing:
@@ -144,7 +145,7 @@ EPathFindingResultState UPathFindingComponent::GetClosetNode(TArray<UWaypointCom
 	if (findingIndex == 0)
 	{
 		closetNode = waypointList[0];
-		auto minDisntace = (closetNode->GetComponentLocation() - location).Size();
+		minDistance = (closetNode->GetComponentLocation() - location).Size();
 		findingIndex = 1;
 	}
 	while (findingIndex < waypointList.Num())
