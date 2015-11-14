@@ -64,9 +64,12 @@ private:
 	int findingIndex;
 
 	void SetStatus(bool isFinding = false, APawn* findPawn = nullptr, EPathFindingState nextState = EPathFindingState::LineTracing);
-	EPathFindingResultState LineTraceForTwoLocations(FVector start, FVector end, TArray<FVector>& resultRoute);
-	EPathFindingResultState GetClosetNode(TArray<UWaypointComponent*>& waypointList, FVector location, UWaypointComponent* closetNode);
-	EPathFindingResultState FindPathByAStarAlgorithm(UWaypointComponent* start, UWaypointComponent* end, TArray<UWaypointComponent*>& open, TArray<UWaypointComponent*>& close);
-	EPathFindingResultState ConvertRouteToVector(UWaypointComponent* start, UWaypointComponent* end, FVector endLoc, TArray<UWaypointComponent*>&open, TArray<UWaypointComponent*>& close, TArray<FVector>& route);
+
+	EPathFindingResultState LineTraceForTwoLocations(TArray<FVector>& resultRoute);
+	EPathFindingResultState GetStartNode();
+	EPathFindingResultState GetEndNode();
+	EPathFindingResultState FindPathByAStarAlgorithm();
+	EPathFindingResultState ConvertRouteToVector(TArray<FVector>& route);
+
 	UWaypointComponent* GetMinCostNode(TArray<UWaypointComponent*>& waypointList);
 };
