@@ -6,6 +6,8 @@
 #include "PathFinderInterface.h"
 #include "ConvertingResultPath.generated.h"
 
+class UWaypointComponent;
+
 UCLASS()
 class AIPROJECT_API UConvertingResultPath : public UObject, public IPathFinderInterface
 {
@@ -16,4 +18,5 @@ public:
 
 private:
 	int32 index = 0;
+	UWaypointComponent* currentNode = nullptr;
 };

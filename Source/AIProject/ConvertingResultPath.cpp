@@ -8,7 +8,7 @@
 
 EPathFindingState UConvertingResultPath::FindPath(FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
 {
-	static auto currentNode = pathFindInfo.EndNode;
+	currentNode = pathFindInfo.EndNode;
 	pathFindInfo.Timer->Start(0);
 	if (index == 0)
 	{
