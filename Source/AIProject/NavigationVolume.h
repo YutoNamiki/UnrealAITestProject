@@ -3,11 +3,12 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "PathFindingComponent.h"
+#include "PathFinderInterface.h"
 #include "NavigationVolume.generated.h"
 
 class UWaypointComponent;
 class UWaypointPathComponent;
+class UPathFindingComponent;
 
 UCLASS()
 class AIPROJECT_API ANavigationVolume : public AActor

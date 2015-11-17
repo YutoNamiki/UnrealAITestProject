@@ -5,6 +5,7 @@
 #include "WaypointComponent.h"
 #include "WaypointPathComponent.h"
 #include "TimeCounterComponent.h"
+#include "PathFindingComponent.h"
 
 // Sets default values
 ANavigationVolume::ANavigationVolume()
@@ -105,8 +106,13 @@ void ANavigationVolume::Initialize()
 		WaypointList.Add(waypoint);
 	}
 	CreatePaths(WaypointList, WaypointPathList, DrawPathColor, Thickness);
+	PathFindingComponent->PathFindInfo.WaypointList.Empty();
+	PathFindingComponent->PathFindInfo.WaypointList = WaypointList;
+
+	// TODO : Ø‘ÖŒãíœ
 	PathFindingComponent->Waypoints.Empty();
 	PathFindingComponent->Waypoints = WaypointList;
+
 	WaypointCount = WaypointList.Num();
 	WaypointPathCount = WaypointPathList.Num();
 	DebugSettings(WaypointList, WaypointPathList, IsUseWaypointCollisions, IsVisiblePaths);

@@ -3,27 +3,38 @@
 #pragma once
 
 #include "Components/ActorComponent.h"
+#include "PathFinderInterface.h"
 #include "PathFindingComponent.generated.h"
 
 class UWaypointComponent;
 class UTimeCounterComponent;
 
-UENUM(BlueprintType)
-enum class EPathFindingState : uint8
+USTRUCT(BlueprintType)
+struct FPathFindingInformation
 {
-	LineTracing				UMETA(DisplayName = "LineTrace"),
-	GettingStartNode		UMETA(DisplayName = "GettingStartNode"),
-	GettingEndNode			UMETA(DisplayName = "GettingEndNode"),
-	PathFinding				UMETA(DisplayName = "PathFinding"),
-	ConvertingPathToVector	UMETA(DisplayName = "ConvertingPathToVector"),
-};
+	GENERATED_USTRUCT_BODY()
 
-UENUM(BlueprintType)
-enum class EPathFindingResultState : uint8
-{
-	Failed		UMETA(DisplayName = "Failed"),
-	Thinking	UMETA(DisplayName = "Thinking"),
-	Success		UMETA(DisplayName = "Success")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UTimeCounterComponent* Timer;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<UWaypointComponent*> WaypointList;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<UWaypointComponent*> OpenList;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<UWaypointComponent*> CloseList;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UWaypointComponent* StartNode;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UWaypointComponent* EndNode;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FVector StartLocation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FVector EndLocation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float MaxCaluclationTime = 2.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int32 FindingIndex;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -31,12 +42,15 @@ class AIPROJECT_API UPathFindingComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FPathFindingInformation PathFindInfo;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Waypoint")
 	TArray<UWaypointComponent*> Waypoints;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PathFinding")
-	float MaxCalculationTime = 5.0f;
+	float MaxCalculationTime = 2.0f;
 
 	// Sets default values for this component's properties
 	UPathFindingComponent();
@@ -54,14 +68,7 @@ private:
 	EPathFindingState currentState;
 	bool isFindingPath;
 	APawn* findingPawn;
-	TArray<UWaypointComponent*> openList;
-	TArray<UWaypointComponent*> closeList;
-	UWaypointComponent* startNode;
-	UWaypointComponent* endNode;
-	FVector startLocation;
-	FVector endLocation;
-	UTimeCounterComponent* timer;
-	int findingIndex;
+	IPathFinderInterface* pathFinder;
 
 	void SetStatus(bool isFinding = false, APawn* findPawn = nullptr, EPathFindingState nextState = EPathFindingState::LineTracing);
 

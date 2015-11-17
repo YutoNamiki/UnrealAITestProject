@@ -14,16 +14,16 @@ UPathFindingComponent::UPathFindingComponent()
 	bWantsBeginPlay = true;
 	PrimaryComponentTick.bCanEverTick = false;
 
-	timer = CreateDefaultSubobject<UTimeCounterComponent>(FName("TimeCounterComponent")); 
+	PathFindInfo.Timer = CreateDefaultSubobject<UTimeCounterComponent>(FName("TimeCounterComponent")); 
 
 	SetStatus();
-	openList.Empty();
-	closeList.Empty();
-	startNode = nullptr;
-	endNode = nullptr;
-	startLocation = FVector::ZeroVector;
-	endLocation = FVector::ZeroVector;
-	findingIndex = 0;
+	PathFindInfo.OpenList.Empty();
+	PathFindInfo.CloseList.Empty();
+	PathFindInfo.StartNode = nullptr;
+	PathFindInfo.EndNode = nullptr;
+	PathFindInfo.StartLocation = FVector::ZeroVector;
+	PathFindInfo.EndLocation = FVector::ZeroVector;
+	PathFindInfo.FindingIndex = 0;
 
 	Waypoints.Empty();
 }
@@ -52,13 +52,14 @@ EPathFindingResultState UPathFindingComponent::FindPath(APawn* findPawn, TArray<
 	else
 	{
 		SetStatus(true, findPawn);
-		openList.Empty();
-		closeList.Empty();
-		startNode = nullptr;
-		endNode = nullptr;
-		startLocation = start;
-		endLocation = end;
-		findingIndex = 0;
+		PathFindInfo.OpenList.Empty();
+		PathFindInfo.CloseList.Empty();
+		PathFindInfo.StartNode = nullptr;
+		PathFindInfo.EndNode = nullptr;
+		PathFindInfo.StartLocation = start;
+		PathFindInfo.EndLocation = end;
+		PathFindInfo.FindingIndex = 0;
+
 	}
 
 	switch (currentState)
@@ -129,10 +130,10 @@ void UPathFindingComponent::SetStatus(bool isFinding, APawn* findPawn, EPathFind
 
 EPathFindingResultState UPathFindingComponent::LineTraceForTwoLocations(TArray<FVector>& resultRoute)
 {
-	if (GetWorld()->LineTraceTestByObjectType(startLocation, endLocation, FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic)))
+	if (GetWorld()->LineTraceTestByObjectType(PathFindInfo.StartLocation, PathFindInfo.EndLocation, FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic)))
 		return EPathFindingResultState::Thinking;
 	resultRoute.Empty();
-	resultRoute.Add(endLocation);
+	resultRoute.Add(PathFindInfo.EndLocation);
 	return EPathFindingResultState::Success;
 }
 
@@ -141,28 +142,28 @@ EPathFindingResultState UPathFindingComponent::GetStartNode()
 	if (Waypoints.Num() == 0)
 		return EPathFindingResultState::Failed;
 	static auto minDistance = 0.0f;
-	timer->Start(0);
-	if (findingIndex == 0)
+	PathFindInfo.Timer->Start(0);
+	if (PathFindInfo.FindingIndex == 0)
 	{
-		startNode = Waypoints[0];
-		minDistance = (startNode->GetComponentLocation() - startLocation).Size();
-		findingIndex = 1;
+		PathFindInfo.StartNode = Waypoints[0];
+		minDistance = (PathFindInfo.StartNode->GetComponentLocation() - PathFindInfo.StartLocation).Size();
+		PathFindInfo.FindingIndex = 1;
 	}
-	while (findingIndex < Waypoints.Num())
+	while (PathFindInfo.FindingIndex < Waypoints.Num())
 	{
-		auto currentNode = Waypoints[findingIndex];
-		auto currentDistance = (currentNode->GetComponentLocation() - startLocation).Size();
+		auto currentNode = Waypoints[PathFindInfo.FindingIndex];
+		auto currentDistance = (currentNode->GetComponentLocation() - PathFindInfo.StartLocation).Size();
 		if (currentDistance < minDistance)
 		{
-			startNode = currentNode;
+			PathFindInfo.StartNode = currentNode;
 			minDistance = currentDistance;
 		}
-		findingIndex++;
+		PathFindInfo.FindingIndex++;
 
-		if (timer->GetElapsedTimeFromStart(0) >= MaxCalculationTime)
+		if (PathFindInfo.Timer->GetElapsedTimeFromStart(0) >= MaxCalculationTime)
 			return EPathFindingResultState::Thinking;
 	}
-	findingIndex = 0;
+	PathFindInfo.FindingIndex = 0;
 	return EPathFindingResultState::Success;
 }
 
@@ -171,54 +172,54 @@ EPathFindingResultState UPathFindingComponent::GetEndNode()
 	if (Waypoints.Num() == 0)
 		return EPathFindingResultState::Failed;
 	static auto minDistance = 0.0f;
-	timer->Start(0);
-	if (findingIndex == 0)
+	PathFindInfo.Timer->Start(0);
+	if (PathFindInfo.FindingIndex == 0)
 	{
-		endNode = Waypoints[0];
-		minDistance = (endNode->GetComponentLocation() - endLocation).Size();
-		findingIndex = 1;
+		PathFindInfo.EndNode = Waypoints[0];
+		minDistance = (PathFindInfo.EndNode->GetComponentLocation() - PathFindInfo.EndLocation).Size();
+		PathFindInfo.FindingIndex = 1;
 	}
-	while (findingIndex < Waypoints.Num())
+	while (PathFindInfo.FindingIndex < Waypoints.Num())
 	{
-		auto currentNode = Waypoints[findingIndex];
-		auto currentDistance = (currentNode->GetComponentLocation() - endLocation).Size();
+		auto currentNode = Waypoints[PathFindInfo.FindingIndex];
+		auto currentDistance = (currentNode->GetComponentLocation() - PathFindInfo.EndLocation).Size();
 		if (currentDistance < minDistance)
 		{
-			endNode = currentNode;
+			PathFindInfo.EndNode = currentNode;
 			minDistance = currentDistance;
 		}
-		findingIndex++;
+		PathFindInfo.FindingIndex++;
 
-		if (timer->GetElapsedTimeFromStart(0) >= MaxCalculationTime)
+		if (PathFindInfo.Timer->GetElapsedTimeFromStart(0) >= MaxCalculationTime)
 			return EPathFindingResultState::Thinking;
 	}
-	findingIndex = 0;
+	PathFindInfo.FindingIndex = 0;
 	return EPathFindingResultState::Success;
 }
 
 EPathFindingResultState UPathFindingComponent::FindPathByAStarAlgorithm()
 {
-	timer->Start(0);
-	if (findingIndex == 0)
-		openList.Add(startNode);
-	while (openList.Num() > 0)
+	PathFindInfo.Timer->Start(0);
+	if (PathFindInfo.FindingIndex == 0)
+		PathFindInfo.OpenList.Add(PathFindInfo.StartNode);
+	while (PathFindInfo.OpenList.Num() > 0)
 	{
-		auto currentNode = GetMinCostNode(openList);
+		auto currentNode = GetMinCostNode(PathFindInfo.OpenList);
 		currentNode->Cost = 0.0f;
 		currentNode->State = EState::Closed;
-		closeList.Add(currentNode);
-		openList.Remove(currentNode);
-		if (currentNode->ID == endNode->ID)
+		PathFindInfo.CloseList.Add(currentNode);
+		PathFindInfo.OpenList.Remove(currentNode);
+		if (currentNode->ID == PathFindInfo.EndNode->ID)
 		{
-			findingIndex = 0;
+			PathFindInfo.FindingIndex = 0;
 			return EPathFindingResultState::Success;
 		}
 		for (auto neighbor : currentNode->NeighborWaypoints)
 		{
-			if (closeList.Contains(neighbor))
+			if (PathFindInfo.CloseList.Contains(neighbor))
 				continue;
-			auto startToCurrent = (startNode->GetComponentLocation() - currentNode->GetComponentLocation()).Size();
-			auto endToNeighbor = (endNode->GetComponentLocation() - neighbor->GetComponentLocation()).Size();
+			auto startToCurrent = (PathFindInfo.StartNode->GetComponentLocation() - currentNode->GetComponentLocation()).Size();
+			auto endToNeighbor = (PathFindInfo.EndNode->GetComponentLocation() - neighbor->GetComponentLocation()).Size();
 			auto neighborToCurrent = (neighbor->GetComponentLocation() - currentNode->GetComponentLocation()).Size();
 			auto cost = startToCurrent + endToNeighbor + neighborToCurrent;
 			if (cost < neighbor->Cost || neighbor->Cost == 0.0f)
@@ -226,53 +227,53 @@ EPathFindingResultState UPathFindingComponent::FindPathByAStarAlgorithm()
 				neighbor->Cost = cost;
 				neighbor->ParentWaypoint = currentNode;
 			}
-			if (!openList.Contains(neighbor))
+			if (!PathFindInfo.OpenList.Contains(neighbor))
 			{
 				neighbor->State = EState::Open;
-				openList.Add(neighbor);
+				PathFindInfo.OpenList.Add(neighbor);
 			}
 		}
-		findingIndex++;
-		if (timer->GetElapsedTimeFromStart(0) > MaxCalculationTime)
+		PathFindInfo.FindingIndex++;
+		if (PathFindInfo.Timer->GetElapsedTimeFromStart(0) > MaxCalculationTime)
 			return EPathFindingResultState::Thinking;
 	}
 
-	findingIndex = 0;
+	PathFindInfo.FindingIndex = 0;
 	return EPathFindingResultState::Failed;
 }
 
 EPathFindingResultState UPathFindingComponent::ConvertRouteToVector(TArray<FVector>& route)
 {
-	static auto currentNode = endNode;
-	timer->Start(0);
-	if (findingIndex == 0)
+	static auto currentNode = PathFindInfo.EndNode;
+	PathFindInfo.Timer->Start(0);
+	if (PathFindInfo.FindingIndex == 0)
 	{
-		route.Add(endLocation);
-		route.Add(endNode->GetComponentLocation());
-		currentNode = endNode;
+		route.Add(PathFindInfo.EndLocation);
+		route.Add(PathFindInfo.EndNode->GetComponentLocation());
+		currentNode = PathFindInfo.EndNode;
 	}
-	while (currentNode->ID != startNode->ID)
+	while (currentNode->ID != PathFindInfo.StartNode->ID)
 	{
 		currentNode = currentNode->ParentWaypoint;
 		route.Add(currentNode->GetComponentLocation());
-		findingIndex++;
-		if (timer->GetElapsedTimeFromStart(0) > MaxCalculationTime)
+		PathFindInfo.FindingIndex++;
+		if (PathFindInfo.Timer->GetElapsedTimeFromStart(0) > MaxCalculationTime)
 			return EPathFindingResultState::Thinking;
 	}
-	for (auto node : openList)
+	for (auto node : PathFindInfo.OpenList)
 	{
 		node->State = EState::None;
 		node->Cost = 0.0f;
 		node->ParentWaypoint = nullptr;
 	}
-	for (auto node : closeList)
+	for (auto node : PathFindInfo.CloseList)
 	{
 		node->State = EState::None;
 		node->Cost = 0.0f;
 		node->ParentWaypoint = nullptr;
 	}
 
-	findingIndex = 0;
+	PathFindInfo.FindingIndex = 0;
 	return EPathFindingResultState::Success;
 }
 
