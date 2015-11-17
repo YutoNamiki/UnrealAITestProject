@@ -32,9 +32,6 @@ struct FPathFindingInformation
 	FVector EndLocation;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	float MaxCaluclationTime = 2.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int32 FindingIndex;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -45,12 +42,6 @@ class AIPROJECT_API UPathFindingComponent : public UActorComponent
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FPathFindingInformation PathFindInfo;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Waypoint")
-	TArray<UWaypointComponent*> Waypoints;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PathFinding")
-	float MaxCalculationTime = 2.0f;
 
 	// Sets default values for this component's properties
 	UPathFindingComponent();
@@ -70,13 +61,6 @@ private:
 	APawn* findingPawn;
 	IPathFinderInterface* pathFinder;
 
-	void SetStatus(bool isFinding = false, APawn* findPawn = nullptr, EPathFindingState nextState = EPathFindingState::LineTracing);
-
-	EPathFindingResultState LineTraceForTwoLocations(TArray<FVector>& resultRoute);
-	EPathFindingResultState GetStartNode();
-	EPathFindingResultState GetEndNode();
-	EPathFindingResultState FindPathByAStarAlgorithm();
-	EPathFindingResultState ConvertRouteToVector(TArray<FVector>& route);
-
-	UWaypointComponent* GetMinCostNode(TArray<UWaypointComponent*>& waypointList);
+	void SetStatus(bool isFinding = false, APawn* findPawn = nullptr, EPathFindingState nextState = EPathFindingState::None);
+	void ChangePathFindingState(EPathFindingState nextState = EPathFindingState::None);
 };

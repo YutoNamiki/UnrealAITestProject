@@ -2,7 +2,7 @@
 
 #include "AIProject.h"
 #include "MyTestActor.h"
-
+#include "MyTestObject.h"
 
 // Sets default values
 AMyTestActor::AMyTestActor()
@@ -22,6 +22,8 @@ AMyTestActor::AMyTestActor()
 	BoxCollision->OnClicked.AddDynamic(this, &AMyTestActor::OnUPrimitiveComponentClicked);
 	BoxCollision->OnComponentBeginOverlap.AddDynamic(this, &AMyTestActor::OnUPrimitiveComponentBeginOverlap);
 	BoxCollision->OnComponentEndOverlap.AddDynamic(this, &AMyTestActor::OnUPrimitiveComponentEndOverlap);
+
+	MyObject = NewObject<UMyTestObject>(this, FName("TestObject"));
 }
 
 // Called when the game starts or when spawned
@@ -252,19 +254,5 @@ void AMyTestActor::OnUPrimitiveComponentEndOverlap(AActor* OtherActor, UPrimitiv
 
 void AMyTestActor::TestFunction()
 {
-	TArray<FOverlapResult> overlapResults;
-	//if (GetWorld()->OverlapMultiByObjectType(overlapResults, BoxCollision->GetComponentLocation(), BoxCollision->GetComponentQuat(),
-	//	FCollisionObjectQueryParams(), FCollisionShape::MakeBox(BoxCollision->GetScaledBoxExtent())))
-	if (GetWorld()->ComponentOverlapMulti(overlapResults, BoxCollision, BoxCollision->GetComponentLocation(), BoxCollision->GetComponentRotation()))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Overlapping!"));
-		UE_LOG(LogTemp, Warning, TEXT("Count: %d objects"), overlapResults.Num());
-		for (auto overlapResult : overlapResults)
-		{
-			auto actor = overlapResult.GetActor();
-			auto component = overlapResult.GetComponent();
-			auto messageText = FString("Actor: ") + actor->GetName() + FString(" Component: ") + component->GetName();
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *messageText);
-		}
-	}
+	MyObject->Function();
 }

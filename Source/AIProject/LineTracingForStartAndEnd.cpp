@@ -6,7 +6,7 @@
 
 EPathFindingState ULineTracingForStartAndEnd::FindPath(FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
 {
-	if (GetWorld()->LineTraceTestByObjectType(pathFindInfo.StartLocation, pathFindInfo.EndLocation, FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic)))
+	if (GetWorld()->LineTraceTestByChannel(pathFindInfo.StartLocation, pathFindInfo.EndLocation, ECollisionChannel::ECC_WorldStatic))
 		return EPathFindingState::GettingStartNode;
 	resultRoute.Empty();
 	resultRoute.Add(pathFindInfo.EndLocation);

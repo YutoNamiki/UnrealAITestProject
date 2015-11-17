@@ -41,7 +41,7 @@ EPathFindingState UFindingPathByAStarAlgorithm::FindPath(FPathFindingInformation
 				pathFindInfo.OpenList.Add(neighbor);
 			}
 		}
-		pathFindInfo.FindingIndex++;
+		index++;
 		if (pathFindInfo.Timer->GetElapsedTimeFromStart(0) > pathFindInfo.MaxCaluclationTime)
 			return EPathFindingState::PathFinding;
 	}

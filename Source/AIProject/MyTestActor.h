@@ -5,6 +5,8 @@
 #include "GameFramework/Actor.h"
 #include "MyTestActor.generated.h"
 
+class UMyTestObject;
+
 UCLASS()
 class AIPROJECT_API AMyTestActor : public AActor
 {
@@ -12,6 +14,7 @@ class AIPROJECT_API AMyTestActor : public AActor
 	
 public:	
 	UBoxComponent* BoxCollision;
+	UMyTestObject* MyObject;
 
 	// Sets default values for this actor's properties
 	AMyTestActor();

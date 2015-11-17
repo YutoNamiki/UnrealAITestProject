@@ -108,11 +108,6 @@ void ANavigationVolume::Initialize()
 	CreatePaths(WaypointList, WaypointPathList, DrawPathColor, Thickness);
 	PathFindingComponent->PathFindInfo.WaypointList.Empty();
 	PathFindingComponent->PathFindInfo.WaypointList = WaypointList;
-
-	// TODO : Ø‘ÖŒãíœ
-	PathFindingComponent->Waypoints.Empty();
-	PathFindingComponent->Waypoints = WaypointList;
-
 	WaypointCount = WaypointList.Num();
 	WaypointPathCount = WaypointPathList.Num();
 	DebugSettings(WaypointList, WaypointPathList, IsUseWaypointCollisions, IsVisiblePaths);
