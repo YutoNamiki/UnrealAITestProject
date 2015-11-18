@@ -5,15 +5,14 @@
 #include "Object.h"
 #include "MyTestObject.generated.h"
 
-/**
- * 
- */
+class UWorld;
+
 UCLASS()
 class AIPROJECT_API UMyTestObject : public UObject
 {
 	GENERATED_BODY()
 	
 public:
-	void Function();
+	void Function(UWorld* world);
 	
 };

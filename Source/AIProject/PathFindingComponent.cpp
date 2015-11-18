@@ -8,6 +8,7 @@
 #include "LineTracingForStartAndEnd.h"
 #include "GettingStartNode.h"
 #include "GettingEndNode.h"
+#include "LoadingFromDataMap.h"
 #include "FindingPathByAStarAlgorithm.h"
 #include "ConvertingResultPath.h"
 
@@ -28,6 +29,7 @@ UPathFindingComponent::UPathFindingComponent()
 	PathFindInfo.EndNode = nullptr;
 	PathFindInfo.StartLocation = FVector::ZeroVector;
 	PathFindInfo.EndLocation = FVector::ZeroVector;
+	PathFindInfo.RouteData.Empty();
 }
 
 // Called when the game starts
@@ -68,7 +70,7 @@ EPathFindingResultState UPathFindingComponent::FindPath(APawn* findPawn, TArray<
 	{
 		if (PathFindInfo.Timer->GetElapsedTimeFromStart(0) > PathFindInfo.MaxCaluclationTime)
 			return EPathFindingResultState::Thinking;
-		auto result = pathFinder->FindPath(PathFindInfo, resultRoute);
+		auto result = pathFinder->FindPath(GetWorld(), PathFindInfo, resultRoute);
 		if (result == currentState)
 			continue;
 		currentState = result;
@@ -121,6 +123,9 @@ void UPathFindingComponent::ChangePathFindingState(EPathFindingState nextState)
 		return;
 	case EPathFindingState::GettingEndNode:
 		pathFinder = NewObject<UGettingEndNode>(this, FName("PathFinder_GettingEndNode"));
+		return;
+	case EPathFindingState::LoadingFromDataMap:
+		pathFinder = NewObject<ULoadingFromDataMap>(this, FName("PathFinder_LoadingFromDataMap"));
 		return;
 	case EPathFindingState::PathFinding:
 		pathFinder = NewObject<UFindingPathByAStarAlgorithm>(this, FName("PathFinder_PathFinding"));

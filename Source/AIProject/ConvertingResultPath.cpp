@@ -5,8 +5,9 @@
 #include "WaypointComponent.h"
 #include "TimeCounterComponent.h"
 #include "PathFindingComponent.h"
+#include "Engine/World.h"
 
-EPathFindingState UConvertingResultPath::FindPath(FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
+EPathFindingState UConvertingResultPath::FindPath(UWorld* world, FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
 {
 	currentNode = pathFindInfo.EndNode;
 	pathFindInfo.Timer->Start(0);
@@ -36,5 +37,8 @@ EPathFindingState UConvertingResultPath::FindPath(FPathFindingInformation& pathF
 		node->Cost = 0.0f;
 		node->ParentWaypoint = nullptr;
 	}
+	auto keyString = FString::FromInt(pathFindInfo.StartNode->ID) + FString("_") + FString::FromInt(pathFindInfo.EndNode->ID);
+	if (!pathFindInfo.RouteData.Contains(keyString))
+		pathFindInfo.RouteData.Add(keyString, resultRoute);
 	return EPathFindingState::Finished;
 }

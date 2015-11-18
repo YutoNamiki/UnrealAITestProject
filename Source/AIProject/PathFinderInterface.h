@@ -4,6 +4,7 @@
 
 #include "PathFinderInterface.generated.h"
 
+class UWorld;
 struct FPathFindingInformation;
 
 UENUM(BlueprintType)
@@ -13,6 +14,7 @@ enum class EPathFindingState : uint8
 	LineTracing				UMETA(DisplayName = "LineTrace"),
 	GettingStartNode		UMETA(DisplayName = "GettingStartNode"),
 	GettingEndNode			UMETA(DisplayName = "GettingEndNode"),
+	LoadingFromDataMap		UMETA(DisplayName = "LoadingFromDataMap"),
 	PathFinding				UMETA(DisplayName = "PathFinding"),
 	ConvertingPathToVector	UMETA(DisplayName = "ConvertingPathToVector"),
 	Finished				UMETA(DisplayName = "Finished")
@@ -36,5 +38,5 @@ class IPathFinderInterface : public IInterface
 {
 	GENERATED_IINTERFACE_BODY()
 
-	virtual EPathFindingState FindPath(FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute) = 0;
+	virtual EPathFindingState FindPath(UWorld* world, FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute) = 0;
 };

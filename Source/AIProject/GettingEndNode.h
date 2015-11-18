@@ -12,7 +12,7 @@ class AIPROJECT_API UGettingEndNode : public UObject, public IPathFinderInterfac
 	GENERATED_BODY()
 	
 public:
-	virtual EPathFindingState FindPath(FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute) override;
+	virtual EPathFindingState FindPath(UWorld* world, FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute) override;
 
 private:
 	float minDistance;

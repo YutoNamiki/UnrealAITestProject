@@ -44,6 +44,8 @@ public:
 	FColor DrawPathColor = FColor::Green;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
 	float Thickness = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PathFinding")
+	float MaxCaluclationTime = 1.0f;
 
 	// Sets default values for this actor's properties
 	ANavigationVolume();

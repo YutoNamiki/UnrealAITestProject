@@ -5,8 +5,9 @@
 #include "WaypointComponent.h"
 #include "TimeCounterComponent.h"
 #include "PathFindingComponent.h"
+#include "Engine/World.h"
 
-EPathFindingState UFindingPathByAStarAlgorithm::FindPath(FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
+EPathFindingState UFindingPathByAStarAlgorithm::FindPath(UWorld* world, FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
 {
 	if (index == 0)
 		pathFindInfo.OpenList.Add(pathFindInfo.StartNode);

@@ -5,8 +5,9 @@
 #include "PathFindingComponent.h"
 #include "TimeCounterComponent.h"
 #include "WaypointComponent.h"
+#include "Engine/World.h"
 
-EPathFindingState UGettingEndNode::FindPath(FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
+EPathFindingState UGettingEndNode::FindPath(UWorld* world, FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
 {
 	if (pathFindInfo.WaypointList.Num() == 0)
 		return EPathFindingState::None;
@@ -22,7 +23,7 @@ EPathFindingState UGettingEndNode::FindPath(FPathFindingInformation& pathFindInf
 		auto currentDistance = (currentNode->GetComponentLocation() - pathFindInfo.EndLocation).Size();
 		if (currentDistance < minDistance)
 		{
-			if (!GetWorld()->LineTraceTestByObjectType(pathFindInfo.EndLocation, currentNode->GetComponentLocation(), FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic)))
+			if (!world->LineTraceTestByObjectType(pathFindInfo.EndLocation, currentNode->GetComponentLocation(), FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic)))
 			{
 				pathFindInfo.EndNode = currentNode;
 				minDistance = currentDistance;
@@ -32,5 +33,5 @@ EPathFindingState UGettingEndNode::FindPath(FPathFindingInformation& pathFindInf
 		if (pathFindInfo.Timer->GetElapsedTimeFromStart(0) >= pathFindInfo.MaxCaluclationTime)
 			return EPathFindingState::GettingEndNode;
 	}
-	return EPathFindingState::PathFinding;
+	return EPathFindingState::LoadingFromDataMap;
 }

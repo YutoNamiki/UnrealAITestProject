@@ -3,10 +3,11 @@
 #include "AIProject.h"
 #include "LineTracingForStartAndEnd.h"
 #include "PathFindingComponent.h"
+#include "Engine/World.h"
 
-EPathFindingState ULineTracingForStartAndEnd::FindPath(FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
+EPathFindingState ULineTracingForStartAndEnd::FindPath(UWorld* world, FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
 {
-	if (GetWorld()->LineTraceTestByChannel(pathFindInfo.StartLocation, pathFindInfo.EndLocation, ECollisionChannel::ECC_WorldStatic))
+	if (world->LineTraceTestByChannel(pathFindInfo.StartLocation, pathFindInfo.EndLocation, ECollisionChannel::ECC_WorldStatic))
 		return EPathFindingState::GettingStartNode;
 	resultRoute.Empty();
 	resultRoute.Add(pathFindInfo.EndLocation);

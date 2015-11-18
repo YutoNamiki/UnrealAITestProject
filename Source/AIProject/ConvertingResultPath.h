@@ -14,7 +14,7 @@ class AIPROJECT_API UConvertingResultPath : public UObject, public IPathFinderIn
 	GENERATED_BODY()
 	
 public:
-	virtual EPathFindingState FindPath(FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute) override;
+	virtual EPathFindingState FindPath(UWorld* world, FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute) override;
 
 private:
 	int32 index = 0;

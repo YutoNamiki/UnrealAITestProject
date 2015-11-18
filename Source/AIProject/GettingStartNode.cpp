@@ -5,8 +5,9 @@
 #include "PathFindingComponent.h"
 #include "WaypointComponent.h"
 #include "TimeCounterComponent.h"
+#include "Engine/World.h"
 
-EPathFindingState UGettingStartNode::FindPath(FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
+EPathFindingState UGettingStartNode::FindPath(UWorld* world, FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute)
 {
 	if (pathFindInfo.WaypointList.Num() == 0)
 		return EPathFindingState::None;
@@ -22,7 +23,7 @@ EPathFindingState UGettingStartNode::FindPath(FPathFindingInformation& pathFindI
 		auto currentDistance = (currentNode->GetComponentLocation() - pathFindInfo.StartLocation).Size();
 		if (currentDistance < minDistance)
 		{
-			if (!GetWorld()->LineTraceTestByObjectType(pathFindInfo.StartLocation, currentNode->GetComponentLocation(), FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic)))
+			if (!world->LineTraceTestByObjectType(pathFindInfo.StartLocation, currentNode->GetComponentLocation(), FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic)))
 			{
 				pathFindInfo.StartNode = currentNode;
 				minDistance = currentDistance;

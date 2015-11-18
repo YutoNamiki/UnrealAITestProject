@@ -31,7 +31,9 @@ struct FPathFindingInformation
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FVector EndLocation;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	float MaxCaluclationTime = 2.0f;
+	float MaxCaluclationTime;
+
+	TMap<FString, TArray<FVector>> RouteData;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )

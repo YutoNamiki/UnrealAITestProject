@@ -4,17 +4,16 @@
 
 #include "Object.h"
 #include "PathFinderInterface.h"
-#include "GettingStartNode.generated.h"
+#include "LoadingFromDataMap.generated.h"
 
 UCLASS()
-class AIPROJECT_API UGettingStartNode : public UObject, public IPathFinderInterface
+class AIPROJECT_API ULoadingFromDataMap : public UObject, public IPathFinderInterface
 {
 	GENERATED_BODY()
 	
 public:
 	virtual EPathFindingState FindPath(UWorld* world, FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute) override;
-
+	
 private:
-	float minDistance;
 	int32 index = 0;
 };

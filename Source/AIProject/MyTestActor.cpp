@@ -254,5 +254,5 @@ void AMyTestActor::OnUPrimitiveComponentEndOverlap(AActor* OtherActor, UPrimitiv
 
 void AMyTestActor::TestFunction()
 {
-	MyObject->Function();
+	MyObject->Function(GetWorld());
 }

@@ -12,5 +12,5 @@ class AIPROJECT_API ULineTracingForStartAndEnd : public UObject, public IPathFin
 	GENERATED_BODY()
 
 public:
-	virtual EPathFindingState FindPath(FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute) override;
+	virtual EPathFindingState FindPath(UWorld* world, FPathFindingInformation& pathFindInfo, TArray<FVector>& resultRoute) override;
 };
