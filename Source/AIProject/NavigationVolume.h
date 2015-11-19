@@ -36,6 +36,8 @@ public:
 	int32 DivideZ = 1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpaceDivision")
 	int32 Recursion = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpeceDivision")
+	bool Bake = true;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
 	bool IsVisiblePaths = true;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")

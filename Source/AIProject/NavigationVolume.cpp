@@ -39,14 +39,22 @@ void  ANavigationVolume::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	Initialize();
+	if (Bake)
+	{
+		Bake = false;
+		Initialize();
+	}
 }
 
 void ANavigationVolume::EditorApplyTranslation(const FVector& DeltaTranslation, bool bAltDown, bool bShiftDown, bool bCtrlDown)
 {
 	Super::EditorApplyTranslation(DeltaTranslation, bAltDown, bShiftDown, bCtrlDown);
 
-	Initialize();
+	if (Bake)
+	{
+		Bake = false;
+		Initialize();
+	}
 }
 
 #endif
